@@ -16,7 +16,7 @@ class SQLMaster:
             func(*args)
             try:
                 SQLMaster.connection.commit() # Bütün sorguların çalışması için en sonda commit demek gerek, error throw edebilir
-                print(f'{SQLMaster.cursor.rowcount} records have been added. Last element ID: {SQLMaster.cursor.lastrowid}')
+                print(f'{SQLMaster.cursor.rowcount} changes have been made. Last one at ID: {SQLMaster.cursor.lastrowid}')
             except connector.Error as err:
                 print(f'There has been an error: {err}')
             finally:
@@ -85,19 +85,40 @@ class SQLMaster:
         result = self.cursor.fetchone()
         print(result)
 
+    @commit
+    def updateProduct(self, productID:int, newName:str, price:float):
+        # "Update products Set name='Samsung S6'" all the names are replaced with Samsung S6
+        # "Update products Set name='Samsung S6' where id=2" the name of the element whose id=2 is replaced with Samsung S6
+        executable = "Update products Set name=%s, price=%s where id=%s"
+        element = (newName,price,productID)
+        self.cursor.execute(executable, element)
+
+    @commit
+    def deleteProduct(self, productID):
+        # Here's how you delete an element from the database
+        #executable = "Delete from products where name LIKE '%S6'"
+        executable = "Delete from products where id=%s"
+        element = (productID,)
+        self.cursor.execute(executable,element)
+
+    def getByCategory(self, category:str):
+        # This is how you connect two different tables
+        # inner join: intersection/ outer join: union/ left(& right join): one side is fully retrieved
+        executable = "Select * from products inner join categories on categories.id=products.categoryid where categories.name=%s"
+        # By using it with the where query, you can filter the content (in this case you retrieve a specific category of elements)
+        elem = (category,)
+        self.cursor.execute(executable,elem)
+        r = self.cursor.fetchall()
+        for i in r:
+            print(i)
+
 Master = SQLMaster()
 
 #Master.selectElems(False)
-
-'''
-myList = [
-    ("lll",678,"nice","nc.jpg"),
-    ("090909",890,"degil","yt.jpg")
-]
-
-Master.insertElem(myList)
-'''
-
+#Master.insertElem([("lll",678,"nice","nc.jpg"),("090909",890,"degil","yt.jpg")])
 #Master.selectByID(3)
 #Master.getByOrder()
-Master.getInfo()
+#Master.getInfo()
+#Master.updateProduct(3,"Macbook Air 2016 14 Inch",2400)
+#Master.deleteProduct(6)
+Master.getByCategory("Bilgisayar")
